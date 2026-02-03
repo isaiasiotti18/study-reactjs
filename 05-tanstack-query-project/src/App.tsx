@@ -1,13 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import "./App.css";
+import { createTodoQueryOptions } from "./queryOptions/createTodoQueryOptions";
+import { Suspense } from "react";
 
 function App() {
-  const query = useQuery({
-    queryKey: ["todos"],
-    queryFn: getTodos,
-  });
-
-  const { data, isFetching, refetch, error } = query;
+  const { data: useSuspenseQueryResult } = useSuspenseQuery(
+    createTodoQueryOptions(),
+  );
+  const { data: useQueryResult } = useQuery(createTodoQueryOptions());
 
   // isLoading can also be used to show a loading state when the query is being fetched for the first time
 
@@ -16,29 +16,17 @@ function App() {
   // isPending can be used to show a loading state when the query is being fetched
   //   -> for the first time or when it's being refetched in the background
 
-  if (error) {
-    return <div>Error: {(error as Error).message}</div>;
-  }
-
   return (
     <>
-      <div>
-        {isFetching ? (
-          <span className="loader"></span>
-        ) : (
-          JSON.stringify(data?.slice(0, 10))
-        )}
-      </div>
+      <Suspense fallback={<div>Loading todos with useSuspenseQuery...</div>}>
+        <div>{JSON.stringify(useSuspenseQueryResult?.slice(0, 5))}</div>
+      </Suspense>
+      <br />
+      {/* <div>{JSON.stringify(useQueryResult?.slice(0, 5))}</div> */}
 
-      <button onClick={() => refetch()}>Refetch</button>
+      {/* <button onClick={() => setId((prev) => prev + 1)}>Increment ID</button> */}
     </>
   );
 }
-
-const getTodos = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  const response = await fetch("https://jsonplaceholder.typicode.com/todos");
-  return await response.json();
-};
 
 export default App;
